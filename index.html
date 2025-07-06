@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>小宋同学暑假听课表</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: "Microsoft YaHei", sans-serif;
+      background-color: #e6f4fa;
+      margin: 0;
+    }
+
+    h1 {
+      text-align: center;
+      color: #007acc;
+      margin: 20px;
+    }
+
+    nav {
+      display: flex;
+      justify-content: center;
+      background-color: #cceeff;
+      padding: 10px;
+    }
+
+    nav button {
+      margin: 0 10px;
+      padding: 8px 16px;
+      background-color: #007acc;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    nav button.active {
+      background-color: #005c99;
+    }
+
+    .subject-nav {
+      display: flex;
+      justify-content: center;
+      background-color: #e0f7fa;
+      padding: 10px;
+      margin-bottom: 20px;
+    }
+
+    .subject-nav button {
+      margin: 0 10px;
+      padding: 8px 16px;
+      background-color: #00acc1;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .subject-nav button.active {
+      background-color: #00838f;
+    }
+
+    .page {
+      display: none;
+      padding: 20px;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    .summary {
+      display: flex;
+      justify-content: space-around;
+      margin: 20px 0;
+      font-weight: bold;
+      color: #005c99;
+    }
+
+    .summary-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 150px;
+    }
+
+    .progress-container {
+      width: 100%;
+      height: 10px;
+      background-color: #e0e0e0;
+      border-radius: 5px;
+      margin-top: 5px;
+    }
+
+    .progress-bar {
+      height: 100%;
+      border-radius: 5px;
+      transition: width 0.3s;
+    }
+
+    #video-progress {
+      background-color: #4dc9f6;
+    }
+
+    #exercise-progress {
+      background-color: #f67019;
+    }
+
+    #mastery-progress {
+      background-color: #00ba9b;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: white;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    th,
+    td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
+
+    th {
+      background-color: #b3e0ff;
+      color: #003d66;
+    }
+
+    tr:hover {
+      background-color: #f1f9ff;
+    }
+
+    input[type="checkbox"] {
+      transform: scale(1.2);
+    }
+
+    .difficulty {
+      color: #ffcc00;
+      font-size: 1.2em;
+    }
+
+    .chart-container {
+      max-width: 800px;
+      margin: 40px auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .checkbox-cell {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .checkbox-cell:hover {
+      background-color: #e6f7ff;
+    }
+
+    .checkbox-cell:active {
+      background-color: #cceeff;
+    }
+
+    .save-notification {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #4CAF50;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 5px;
+      z-index: 1000;
+      animation: fadeOut 2s forwards;
+      animation-delay: 1s;
+    }
+
+    @keyframes fadeOut {
+      to {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+    }
+
+    @media (max-width: 600px) {
+
+      nav,
+      .subject-nav {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      nav button,
+      .subject-nav button {
+        margin: 5px 0;
+        width: 90%;
+      }
+
+      .summary {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .summary .summary-item {
+        margin: 5px 0;
+        width: 100%;
+      }
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body {
+        background-color: #1a1a1a;
+        color: #e0e0e0;
+      }
+
+      table {
+        background-color: #2d2d2d;
+        color: #e0e0e0;
+      }
+
+      th {
+        background-color: #003366;
+        color: #e0e0e0;
+      }
+
+      tr:hover {
+        background-color: #333333;
+      }
+
+      .chart-container {
+        background-color: #2d2d2d;
+      }
+
+      .checkbox-cell:hover {
+        background-color: #333333;
+      }
+
+      .subject-nav {
+        background-color: #004d40;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <h1>高三复习自查表</h1>
+  <nav>
+    <button id="plan-tab" class="active" onclick="showPage('plan')">📘 复习计划</button>
+    <button id="stat-tab" onclick="showPage('stat')">📊 数据统计</button>
+  </nav>
+
+  <div id="plan" class="page active">
+    <div class="subject-nav">
+      <button id="chem-subject" class="active" onclick="showSubject('chem')">化学</button>
+      <button id="phy-subject" onclick="showSubject('phy')">物理</button>
+    </div>
+
+    <div id="chem-content" class="subject-content">
+      <div class="summary">
+        <div class="summary-item">
+          <div id="chem-video-summary">视频完成: 加载中...</div>
+          <div class="progress-container">
+            <div class="progress-bar" id="chem-video-progress"></div>
+          </div>
+        </div>
+        <div class="summary-item">
+          <div id="chem-exercise-summary">题题完成: 加载中...</div>
+          <div class="progress-container">
+            <div class="progress-bar" id="chem-exercise-progress"></div>
+          </div>
+        </div>
+        <div class="summary-item">
+          <div id="chem-mastery-summary">掌握情况: 加载中...</div>
+          <div class="progress-container">
+            <div class="progress-bar" id="chem-mastery-progress"></div>
+          </div>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>序号</th>
+            <th>知识视频</th>
+            <th>视频完成</th>
+            <th>题题完成</th>
+            <th>掌握情况</th>
+          </tr>
+        </thead>
+        <tbody id="chem-table-body"></tbody>
+      </table>
+    </div>
+
+    <div id="phy-content" class="subject-content" style="display:none;">
+      <div class="summary">
+        <div class="summary-item">
+          <div id="phy-video-summary">视频完成: 加载中...</div>
+          <div class="progress-container">
+            <div class="progress-bar" id="phy-video-progress"></div>
+          </div>
+        </div>
+        <div class="summary-item">
+          <div id="phy-exercise-summary">题题完成: 加载中...</div>
+          <div class="progress-container">
+            <div class="progress-bar" id="phy-exercise-progress"></div>
+          </div>
+        </div>
+        <div class="summary-item">
+          <div id="phy-mastery-summary">掌握情况: 加载中...</div>
+          <div class="progress-container">
+            <div class="progress-bar" id="phy-mastery-progress"></div>
+          </div>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>序号</th>
+            <th>知识视频</th>
+            <th>视频完成</th>
+            <th>题题完成</th>
+            <th>掌握情况</th>
+          </tr>
+        </thead>
+        <tbody id="phy-table-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="stat" class="page">
+    <div class="subject-nav">
+      <button id="chem-stat-tab" class="active" onclick="showStatSubject('chem')">化学统计</button>
+      <button id="phy-stat-tab" onclick="showStatSubject('phy')">物理统计</button>
+    </div>
+
+    <div id="chem-stat" class="stat-content">
+      <div class="chart-container">
+        <canvas id="chem-pieChart"></canvas>
+      </div>
+      <div class="chart-container">
+        <canvas id="chem-barChart"></canvas>
+      </div>
+    </div>
+
+    <div id="phy-stat" class="stat-content" style="display:none;">
+      <div class="chart-container">
+        <canvas id="phy-pieChart"></canvas>
+      </div>
+      <div class="chart-container">
+        <canvas id="phy-barChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function showPage(name) {
+      document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+      document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
+      document.getElementById(name).classList.add("active");
+      document.getElementById(name + "-tab").classList.add("active");
+    }
+
+    function showSubject(name) {
+      document.querySelectorAll(".subject-content").forEach(p => p.style.display = "none");
+      document.querySelectorAll(".subject-nav button").forEach(b => b.classList.remove("active"));
+      document.getElementById(name + "-content").style.display = "block";
+      document.getElementById(name + "-subject").classList.add("active");
+    }
+
+    function showStatSubject(name) {
+      document.querySelectorAll(".stat-content").forEach(p => p.style.display = "none");
+      document.querySelectorAll(".subject-nav button").forEach(b => b.classList.remove("active"));
+      document.getElementById(name + "-stat").style.display = "block";
+      document.getElementById(name + "-stat-tab").classList.add("active");
+    }
+
+    const chemData = [
+      { id: 1, title: "1.1.4.1 氧化还原反应的核心概念" },
+      { id: 2, title: "1.1.4.4 氧化性还原性、得失电子守恒计算" },
+      { id: 3, title: "1.1.4.2 氧化还原方程式基础配平" },
+      { id: 4, title: "1.1.4.3 氧化还原方程式进阶配平" },
+      { id: 5, title: "1.2.1.1 元素化合物学法、金属非金属通性" },
+      { id: 6, title: "1.2.2.1 钠元素性质总述" },
+      { id: 7, title: "1.2.2.2 过氧化钠性质详解" },
+      { id: 8, title: "1.2.2.4 铝元素性质总述" },
+      { id: 9, title: "1.2.2.6 铁元素性质总述" },
+      { id: 10, title: "1.2.2.7 铁盐的转化、铁离子检验" },
+      { id: 11, title: "1.2.2.8 镁、铜元素性质总述" },
+      { id: 12, title: "1.2.3.1 氯元素性质总述" },
+      { id: 13, title: "1.2.3.3 硫元素性质总述" },
+      { id: 14, title: "1.2.3.4 二氧化硫性质精讲" },
+      { id: 15, title: "1.2.3.6 氮气、氨气和铵盐" },
+      { id: 16, title: "1.2.2.3 碳酸钠、碳酸氢钠性质详解" },
+      { id: 17, title: "1.2.2.5 铝元素实验及工业流程" },
+      { id: 18, title: "1.2.3.2 卤族元素" },
+      { id: 19, title: "1.2.3.5 硫酸、硫化物和硫代硫酸盐等" },
+      { id: 20, title: "1.1.1.1 物质的分类——酸碱盐" },
+      { id: 21, title: "1.1.1.2 物质的分类进阶、胶体分散系" },
+      { id: 22, title: "1.1.3.1 离子反应与离子方程式基本书写" },
+      { id: 23, title: "1.1.3.2 离子共存" },
+      { id: 24, title: "1.1.2.1 化学计量基本概念" },
+      { id: 25, title: "1.1.2.2 阿伏加德罗常数相关正误判断" },
+      { id: 26, title: "1.2.3.8 硅元素及其化合物" },
+      { id: 27, title: "1.3.1.1 反应热、焓变与热化学方程式书写" },
+      { id: 28, title: "1.3.1.2 燃烧热和盖斯定律" },
+      { id: 29, title: "1.3.2.1 化学反应速率的定义及计算" },
+      { id: 30, title: "1.3.2.2 化学反应速率的影响因素" },
+      { id: 31, title: "1.3.3.1 化学平衡状态的判定" },
+      { id: 32, title: "1.3.3.2 影响平衡移动的因素" },
+      { id: 33, title: "1.3.6.1 基本电池装置和应用" },
+      { id: 34, title: "1.3.6.2 电极为程式书写" },
+      { id: 35, title: "1.3.6.3 新型电池装置精讲" },
+      { id: 36, title: "1.4.1.3 脂肪烃" },
+      { id: 37, title: "1.4.1.4 芳香烃与卤代烃" },
+      { id: 38, title: "1.4.1.5 醇和酚" },
+      { id: 39, title: "1.4.1.7 酸、酯和酰胺" },
+      { id: 40, title: "1.4.2.1 原子结构、同位素及半径大小比较" },
+      { id: 41, title: "1.4.2.2 原子核外电子排布" },
+      { id: 42, title: "1.4.2.3 电离能、电负性和元素周期律" },
+      { id: 43, title: "1.4.2.5 VSEPR与杂化轨道理论" },
+      { id: 44, title: "1.4.2.9 晶体类型、熔沸点" }
+    ];
+
+    const phyData =
+      [
+        { id: 1, title: "1.2.1.1 重力、弹力和摩擦力" },
+        { id: 2, title: "1.2.2.1 力的合成和分解" },
+        { id: 3, title: "1.2.3.1 单物体动态平衡问题" },
+        { id: 4, title: "1.2.3.2 多物体平衡问题" },
+        { id: 5, title: "1.3.2.3 斜面动力学问题" },
+        { id: 6, title: "1.3.1.1 牛顿运动定律与国际单位制" },
+        { id: 7, title: "1.3.2.1 超重与失重问题" },
+        { id: 8, title: "1.3.2.2 倾斜弹力动力学问题" },
+        { id: 9, title: "1.3.2.6 水平传送带动力学问题" },
+        { id: 10, title: "1.3.2.4 弹簧动力学常规问题" },
+        { id: 11, title: "1.3.3.2 板块动力学问题" },
+        { id: 12, title: "1.3.3.1 系统牛顿第二定律问题" },
+        { id: 13, title: "1.4.1.1 运动的合成与分解" },
+        { id: 14, title: "1.4.2.1 平抛运动公式" },
+        { id: 15, title: "1.4.2.2 斜面平抛问题" },
+        { id: 16, title: "1.5.1.1 圆周运动物理量与传动问题" },
+        { id: 17, title: "1.5.2.1 水平圆周运动之摩擦力问题" },
+        { id: 18, title: "1.5.2.2 水平圆周运动之斜弹力问题" },
+        { id: 19, title: "1.6.1.1 开普勒定律与万有引力定律" },
+        { id: 20, title: "1.6.2.1 卫星环绕问题" },
+        { id: 21, title: "1.6.2.2 地表重力问题" },
+        { id: 22, title: "1.6.2.3 天体质量与密度问题" },
+        { id: 23, title: "1.6.2.4 多星问题" }
+
+      ];
+
+    function showSaveNotification() {
+      const saveMsg = document.createElement('div');
+      saveMsg.className = 'save-notification';
+      saveMsg.textContent = '进度已保存';
+      document.body.appendChild(saveMsg);
+      setTimeout(() => saveMsg.remove(), 3000);
+    }
+
+    function saveProgress(subject) {
+      const rows = [...document.querySelectorAll(`#${subject}-table-body tr`)];
+      const progress = rows.map(row => [...row.querySelectorAll("input")].map(i => i.checked));
+      localStorage.setItem(`${subject}_progress`, JSON.stringify(progress));
+      showSaveNotification();
+    }
+
+    function loadProgress(subject) {
+      const saved = JSON.parse(localStorage.getItem(`${subject}_progress`) || "[]");
+      const rows = [...document.querySelectorAll(`#${subject}-table-body tr`)];
+      rows.forEach((row, i) => {
+        if (saved[i]) {
+          const inputs = row.querySelectorAll("input");
+          inputs.forEach((input, j) => input.checked = saved[i][j]);
+        }
+      });
+      updateSummary(subject);
+    }
+
+    function updateDailyLog(subject) {
+      const today = new Date().toISOString().slice(0, 10);
+      let log = JSON.parse(localStorage.getItem(`${subject}_daily_log`) || "{}");
+      const rows = [...document.querySelectorAll(`#${subject}-table-body tr`)];
+      let count = 0;
+      rows.forEach(row => {
+        row.querySelectorAll("input").forEach(input => {
+          if (input.checked) count++;
+        });
+      });
+      log[today] = count;
+      localStorage.setItem(`${subject}_daily_log`, JSON.stringify(log));
+      updateBarChart(subject);
+    }
+
+    function updateSummary(subject) {
+      const rows = [...document.querySelectorAll(`#${subject}-table-body tr`)];
+      let videoDone = 0, exerciseDone = 0, masteryDone = 0;
+      const total = subject === 'chem' ? 44 : 23;
+
+      rows.forEach(row => {
+        const inputs = row.querySelectorAll("input");
+        if (inputs[0].checked) videoDone++;
+        if (inputs[1].checked) exerciseDone++;
+        if (inputs[2].checked) masteryDone++;
+      });
+
+      const videoPercent = (videoDone / total * 100).toFixed(1);
+      const exercisePercent = (exerciseDone / total * 100).toFixed(1);
+      const masteryPercent = (masteryDone / total * 100).toFixed(1);
+
+      document.getElementById(`${subject}-video-summary`).textContent = `视频完成: ${videoDone}/${total} (${videoPercent}%)`;
+      document.getElementById(`${subject}-exercise-summary`).textContent = `题题完成: ${exerciseDone}/${total} (${exercisePercent}%)`;
+      document.getElementById(`${subject}-mastery-summary`).textContent = `掌握情况: ${masteryDone}/${total} (${masteryPercent}%)`;
+
+      document.getElementById(`${subject}-video-progress`).style.width = `${videoPercent}%`;
+      document.getElementById(`${subject}-exercise-progress`).style.width = `${exercisePercent}%`;
+      document.getElementById(`${subject}-mastery-progress`).style.width = `${masteryPercent}%`;
+
+      const pieChart = window[`${subject}PieChart`];
+      pieChart.data.datasets[0].data = [videoDone, exerciseDone, masteryDone, total * 3 - (videoDone + exerciseDone + masteryDone)];
+      pieChart.update();
+      saveProgress(subject);
+      updateDailyLog(subject);
+    }
+
+    // 初始化化学表格
+    chemData.forEach(item => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${item.id}</td>
+        <td>${item.title}</td>
+        <td class="checkbox-cell"><input type="checkbox" onchange="updateSummary('chem')"></td>
+        <td class="checkbox-cell"><input type="checkbox" onchange="updateSummary('chem')"></td>
+        <td class="checkbox-cell"><input type="checkbox" onchange="updateSummary('chem')"></td>
+      `;
+      document.getElementById("chem-table-body").appendChild(row);
+    });
+
+    // 初始化物理表格
+    phyData.forEach(item => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${item.id}</td>
+        <td>${item.title}</td>
+        <td class="checkbox-cell"><input type="checkbox" onchange="updateSummary('phy')"></td>
+        <td class="checkbox-cell"><input type="checkbox" onchange="updateSummary('phy')"></td>
+        <td class="checkbox-cell"><input type="checkbox" onchange="updateSummary('phy')"></td>
+      `;
+      document.getElementById("phy-table-body").appendChild(row);
+    });
+
+    // 添加点击单元格切换复选框的功能
+    document.addEventListener('DOMContentLoaded', function () {
+      document.querySelectorAll('.checkbox-cell').forEach(cell => {
+        cell.addEventListener('click', function (e) {
+          if (e.target.tagName !== 'INPUT') {
+            const checkbox = this.querySelector('input');
+            if (checkbox) {
+              checkbox.checked = !checkbox.checked;
+              const subject = this.closest('.subject-content').id.split('-')[0];
+              updateSummary(subject);
+            }
+          }
+        });
+      });
+    });
+
+    // 添加键盘导航支持
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+        const activeSubject = document.querySelector('.subject-content[style="display: block;"]') ||
+          document.querySelector('.subject-content:not([style])');
+        if (!activeSubject) return;
+
+        const rows = [...activeSubject.querySelectorAll('tbody tr')];
+        const current = document.activeElement.closest('tr');
+        let index = rows.indexOf(current);
+
+        if (index >= 0) {
+          if (e.key === 'ArrowUp' && index > 0) index--;
+          if (e.key === 'ArrowDown' && index < rows.length - 1) index++;
+
+          const cells = rows[index].querySelectorAll('.checkbox-cell');
+          if (cells.length > 0) cells[0].focus();
+        }
+      } else if (e.key === 'Enter' && document.activeElement.classList.contains('checkbox-cell')) {
+        const checkbox = document.activeElement.querySelector('input');
+        if (checkbox) {
+          checkbox.checked = !checkbox.checked;
+          const subject = document.activeElement.closest('.subject-content').id.split('-')[0];
+          updateSummary(subject);
+        }
+      }
+    });
+
+    // 初始化化学图表
+    const chemPieCtx = document.getElementById('chem-pieChart').getContext('2d');
+    window.chemPieChart = new Chart(chemPieCtx, {
+      type: 'pie',
+      data: {
+        labels: ['视频完成', '题题完成', '掌握情况', '未完成'],
+        datasets: [{
+          data: [0, 0, 0, 132],
+          backgroundColor: ['#4dc9f6', '#f67019', '#00ba9b', '#ccc'],
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: 'bottom' } }
+      }
+    });
+
+    // 初始化物理图表
+    const phyPieCtx = document.getElementById('phy-pieChart').getContext('2d');
+    window.phyPieChart = new Chart(phyPieCtx, {
+      type: 'pie',
+      data: {
+        labels: ['视频完成', '题题完成', '掌握情况', '未完成'],
+        datasets: [{
+          data: [0, 0, 0, 105],
+          backgroundColor: ['#4dc9f6', '#f67019', '#00ba9b', '#ccc'],
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: 'bottom' } }
+      }
+    });
+
+    let chemBarChart, phyBarChart;
+    function updateBarChart(subject) {
+      const ctx = document.getElementById(`${subject}-barChart`).getContext('2d');
+      const log = JSON.parse(localStorage.getItem(`${subject}_daily_log`) || "{}");
+      const dates = Object.keys(log).slice(-7);
+      const counts = dates.map(d => log[d]);
+
+      if (window[`${subject}BarChart`]) window[`${subject}BarChart`].destroy();
+      window[`${subject}BarChart`] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: dates,
+          datasets: [{
+            label: '每日完成打卡',
+            data: counts,
+            backgroundColor: '#4dc9f6',
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: { y: { beginAtZero: true, stepSize: 1 } }
+        }
+      });
+    }
+
+    // 初始加载
+    loadProgress('chem');
+    loadProgress('phy');
+    updateBarChart('chem');
+    updateBarChart('phy');
+  </script>
+</body>
+
+</html>
